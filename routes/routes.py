@@ -8,18 +8,13 @@ from schema.schemas import list_users
 from schema.schemas import list_quesiton
 from bson import ObjectId
 from datetime import datetime
-import os
+
 
 router = APIRouter()
-client = MongoClient(os.getenv('MONGOURL'))
+
 @router.get("/")
 async def get_user():
-    try:
-        client.admin.command('ping')
-        print("Pinged your deployment. You successfully connected to MongoDB!")
-    except Exception as e:
-        print(e)
-    users = {"message": "works"}  # list_users(user_collection.find())
+    users = list_users(user_collection.find())
     return users
 
 
