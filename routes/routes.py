@@ -15,7 +15,7 @@ router = APIRouter()
 @router.get("/")
 async def get_user():
     users = {"message": "works"}  # list_users(user_collection.find())
-    return {users}
+    return users
 
 
 @router.get("/questions/")
