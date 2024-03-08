@@ -11,7 +11,8 @@ app = FastAPI()
 
 dotenv_path = os.getenv('MONGOURL')
 load_dotenv(dotenv_path=dotenv_path)
-client = MongoClient(os.getenv('MONGOURL'), server_api=ServerApi('1'))
+client = MongoClient(os.getenv('MONGOURL'),
+                     server_api=ServerApi('1'), ssl=False)
 # Send a ping to confirm a successful connection
 try:
     client.admin.command('ping')
