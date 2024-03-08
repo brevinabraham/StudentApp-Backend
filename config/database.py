@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 from pathlib import Path
 import os
 
-dotenv_path = Path('mongo.env')
+dotenv_path = os.getenv('MONGOURL')
 load_dotenv(dotenv_path=dotenv_path)
 client = MongoClient(os.getenv('MONGOURL'))
 
