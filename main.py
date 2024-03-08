@@ -1,3 +1,6 @@
+import os
+from pathlib import Path
+from dotenv import load_dotenv
 from pymongo.server_api import ServerApi
 from pymongo.mongo_client import MongoClient
 from fastapi import FastAPI
@@ -5,6 +8,20 @@ from routes.routes import router
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
+
+dotenv_path = os.getenv('MONGOURL')
+load_dotenv(dotenv_path=dotenv_path)
+client = MongoClient(os.getenv('MONGOURL'))
+# Send a ping to confirm a successful connection
+try:
+    client.admin.command('ping')
+    print("Pinged your deployment. You successfully connected to MongoDB!")
+except Exception as e:
+    print(e)
+
+
+
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
