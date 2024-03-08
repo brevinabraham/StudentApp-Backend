@@ -1,0 +1,10 @@
+
+# Byte-compiled / compiled files
+__pycache__/
+
+# Compiled Python files
+*.pyc
+
+# local env files
+.env
+
