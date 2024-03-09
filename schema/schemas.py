@@ -4,7 +4,8 @@ def individual_question(question) -> dict:
         "title": question["title"],
         "question": question["question"],
         "datatype": question["datatype"],
-        "var_id": question["var_id"]
+        "var_id": question["var_id"],
+        "autocomplete": question["autocomplete"]
     }
 
 
