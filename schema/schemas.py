@@ -3,7 +3,7 @@ def individual_question(question) -> dict:
         "id": str(question["_id"]),
         "title": question["title"],
         "question": question["question"],
-        "datatype": question["datatype"],
+        "keyboardtype": question["keyboardtype"],
         "var_id": question["var_id"],
         "autocomplete": question["autocomplete"]
     }
