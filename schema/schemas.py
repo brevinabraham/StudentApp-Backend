@@ -3,7 +3,7 @@ def individual_question(question) -> dict:
         "id": str(question["_id"]),
         "title": question["title"],
         "question": question["question"],
-        "keyboardtype": question["keyboardtype"],
+        "datatype": question["datatype"],
         "var_id": question["var_id"]
     }
 
@@ -17,9 +17,7 @@ def individual_user(user) -> dict:
         "id": str(user["_id"]),
         "fname": user["fname"],
         "lname": user["lname"],
-        "dob_dd": user["dob_dd"],
-        "dob_mm": user["dob_mm"],
-        "dob_yy": user["dob_yy"],
+        "dob": user["dob"],
         "email": user["email"],
         "student": user["student"],
         "teacher": user["teacher"],
