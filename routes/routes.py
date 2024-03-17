@@ -1,6 +1,7 @@
 from pymongo.server_api import ServerApi
 from pymongo.mongo_client import MongoClient
 from fastapi import APIRouter
+from fastapi import HTTPException
 from models.user_management import RegBase
 from config.database import user_collection
 from config.database import user_questions_collections
@@ -12,10 +13,22 @@ from datetime import datetime
 
 router = APIRouter()
 
-@router.get("/")
-async def get_user():
-    users = list_users(user_collection.find())
-    return users
+
+@router.get("/{email}")
+async def get_user(email: str):
+    user = user_collection.find_one(
+        {"email": email}
+    )
+    if user is None:
+        return {'message': "user doesn't exist", "bool": False}
+    else:
+        for key, value in user.items():
+            if key == '_id':
+                user[key] = str(value)
+            else:
+                user[key] = value
+        return {'message': 'user found', 'userRole': user["role"], "bool": True, "userID": user["_id"]}
+
 
 
 @router.get("/questions/")
@@ -28,6 +41,7 @@ async def get_questions():
 @router.post("/")
 async def post_user(reguser: RegBase):
     user_collection.insert_one(dict(reguser))
+    return {'message': 'complete'}
 
 
 @router.put("/{id}")

@@ -20,10 +20,8 @@ def individual_user(user) -> dict:
         "lname": user["lname"],
         "dob": user["dob"],
         "email": user["email"],
-        "student": user["student"],
-        "teacher": user["teacher"],
+        "role": user["role"]
     }
-
 
 def list_users(users) -> list:
     return [individual_user(user) for user in users]
