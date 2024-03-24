@@ -78,8 +78,7 @@ async def protected_route(user_id: str = Depends(get_current_user_id)):
             user[key] = str(value)
         else:
             user[key] = value
-    print(user)
-    return {'data': 'user'}
+    return {'data': user}
 
 
 @router.post("/api/user/logout")
