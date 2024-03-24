@@ -72,7 +72,7 @@ def get_current_user_id(request: Request):
 async def protected_route(user_id: str = Depends(get_current_user_id)):
     if not user_id:
         raise HTTPException(status_code=401, detail="Not authenticated")
-    print(user_collection.find_one({"_id": ObjectId(user_id)}))
+    return {'data': user_collection.find_one({"_id": ObjectId(user_id)})}
 
 
 @router.post("/api/user/logout")
