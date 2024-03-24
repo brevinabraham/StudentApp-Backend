@@ -1,8 +1,15 @@
 from pydantic import BaseModel
 
+
 class RegBase(BaseModel):
     fname: str
     lname: str
     dob: str
     email: str
-    role: list
+    password: str
+    roles: list
+
+
+class User(BaseModel):
+    email: str
+    password: str

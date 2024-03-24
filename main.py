@@ -6,6 +6,7 @@ from pymongo.mongo_client import MongoClient
 from fastapi import FastAPI
 from routes.routes import router
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.sessions import SessionMiddleware
 
 app = FastAPI()
 
@@ -30,5 +31,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(SessionMiddleware,
+                   secret_key=os.getenv('SESSIONMIDDLEWARE_KEY'))
 
 app.include_router(router)

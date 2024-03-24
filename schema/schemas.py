@@ -5,7 +5,8 @@ def individual_question(question) -> dict:
         "question": question["question"],
         "keyboardtype": question["keyboardtype"],
         "var_id": question["var_id"],
-        "autocomplete": question["autocomplete"]
+        "autocomplete": question["autocomplete"],
+        "secure": question["secure"]
     }
 
 
@@ -20,8 +21,6 @@ def individual_user(user) -> dict:
         "lname": user["lname"],
         "dob": user["dob"],
         "email": user["email"],
+        "password": user["password"],
         "role": user["role"]
     }
-
-def list_users(users) -> list:
-    return [individual_user(user) for user in users]
