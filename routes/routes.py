@@ -1,7 +1,7 @@
 from pymongo.server_api import ServerApi
 from pymongo.mongo_client import MongoClient
-from fastapi import APIRouter, HTTPException, Request, Depends
-
+from fastapi import APIRouter, HTTPException, Request, Depends, Response
+from fastapi.responses import JSONResponse
 from models.user_management import RegBase
 from models.user_management import User
 from config.database import user_collection
@@ -11,9 +11,34 @@ from bson import ObjectId
 from datetime import datetime
 from passlib.context import CryptContext
 import bcrypt
-
+from cryptography.fernet import Fernet
+import base64
+import os
 
 router = APIRouter()
+
+SECRET_KEY = os.getenv('SECRET_KEY').encode()
+cipher_suite = Fernet(SECRET_KEY)
+
+
+def encrypt_user_id(user_id: str) -> str:
+    encrypted_text = cipher_suite.encrypt(user_id.encode())
+    return base64.urlsafe_b64encode(encrypted_text).decode()
+
+
+def decrypt_user_id(encrypted_user_id: str) -> str:
+    decoded_encrypted_text = base64.urlsafe_b64decode(
+        encrypted_user_id.encode())
+    decrypted_text = cipher_suite.decrypt(decoded_encrypted_text)
+    return decrypted_text.decode()
+
+
+def get_current_user_id(request: Request):
+    encrypted_user_id = request.cookies.get("userId")
+    if not encrypted_user_id:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    user_id = decrypt_user_id(encrypted_user_id)
+    return user_id
 
 
 @router.get("/api/user/{email}")
@@ -60,16 +85,18 @@ async def login(request: Request, user_data: User):
         raise HTTPException(
             status_code=401, detail="Invalid email or password")
 
-    request.session["user_id"] = str(user["_id"])
-    return {'message': 'Login successful!', 'userId': str(user["_id"])}
+    user_id = str(user["_id"])
+    encrypted_user_id = encrypt_user_id(user_id)
 
-
-def get_current_user_id(request: Request):
-    return request.session.get("user_id")
-
+    response = JSONResponse(
+        content={'message': 'Login successful!', 'userId': encrypted_user_id})
+    response.set_cookie(key="userId", value=encrypted_user_id,
+                        httponly=True, secure=True, samesite='None')
+    return response
 
 @router.get("/protected")
 async def protected_route(user_id: str = Depends(get_current_user_id)):
+
     if not user_id:
         raise HTTPException(status_code=401, detail="Not authenticated")
     user = user_collection.find_one({"_id": ObjectId(user_id)})
@@ -82,8 +109,8 @@ async def protected_route(user_id: str = Depends(get_current_user_id)):
 
 
 @router.post("/api/user/logout")
-async def logout(request: Request):
-    request.session.clear()
+async def logout(response: Response):
+    response.delete_cookie("userId")
     return {"message": "Logout successful!"}
 
 

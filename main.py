@@ -10,6 +10,8 @@ from starlette.middleware.sessions import SessionMiddleware
 
 app = FastAPI()
 
+# uvicorn app:main --reload
+
 dotenv_path = os.getenv('MONGOURL')
 load_dotenv(dotenv_path=dotenv_path)
 client = MongoClient(os.getenv('MONGOURL'),
