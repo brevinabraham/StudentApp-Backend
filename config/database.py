@@ -12,3 +12,4 @@ db = client['user_management_db']
 
 user_collection = db["user_collection"]
 user_questions_collections = db["questions"]
+session_collection = db["session_collection"]

@@ -33,7 +33,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-app.add_middleware(SessionMiddleware,
-                   secret_key=os.getenv('SESSIONMIDDLEWARE_KEY'))
+
 
 app.include_router(router)

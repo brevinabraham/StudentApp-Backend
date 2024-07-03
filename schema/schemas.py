@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta
+
 def individual_question(question) -> dict:
     return {
         "id": str(question["_id"]),
@@ -24,3 +26,22 @@ def individual_user(user) -> dict:
         "password": user["password"],
         "role": user["role"]
     }
+
+
+def individual_session(session) -> dict:
+    return {
+        "session_id": str(session["_id"]),
+        "user_id": session["user_id"],
+        "created_at": session["created_at"],
+        "expires_at": session["expires_at"]
+    }
+
+
+def create_session(user_id: str, expires_delta: timedelta):
+    now = datetime.now()
+    session = {
+        "user_id": user_id,
+        "created_at": now,
+        "expires_at": now + expires_delta
+    }
+    return session

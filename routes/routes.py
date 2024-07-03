@@ -4,48 +4,56 @@ from fastapi import APIRouter, HTTPException, Request, Depends, Response
 from fastapi.responses import JSONResponse
 from models.user_management import RegBase
 from models.user_management import User
-from config.database import user_collection
-from config.database import user_questions_collections
-from schema.schemas import list_quesiton
+from config.database import user_collection, user_questions_collections, session_collection
+from schema.schemas import list_quesiton, create_session, individual_session
 from bson import ObjectId
-from datetime import datetime
+from datetime import datetime, timedelta
 from passlib.context import CryptContext
 import bcrypt
-from cryptography.fernet import Fernet
-import base64
+import jwt
 import os
 
 router = APIRouter()
 
 SECRET_KEY = os.getenv('SECRET_KEY').encode()
-cipher_suite = Fernet(SECRET_KEY)
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 
-def encrypt_user_id(user_id: str) -> str:
-    encrypted_text = cipher_suite.encrypt(user_id.encode())
-    return base64.urlsafe_b64encode(encrypted_text).decode()
+def create_access_token(data: dict, expires_delta: timedelta = None):
+    to_encode = data.copy()
+    if expires_delta:
+        expire = datetime.utcnow() + expires_delta
+    else:
+        expire = datetime.utcnow() + timedelta(minutes=15)
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
 
 
-def decrypt_user_id(encrypted_user_id: str) -> str:
-    decoded_encrypted_text = base64.urlsafe_b64decode(
-        encrypted_user_id.encode())
-    decrypted_text = cipher_suite.decrypt(decoded_encrypted_text)
-    return decrypted_text.decode()
+def decode_access_token(token: str):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id: str = payload.get("sub")
+        if user_id is None:
+            raise HTTPException(status_code=401, detail="Not authenticated")
+        return user_id
+    except jwt.PyJWTError:
+        raise HTTPException(status_code=401, detail="Not authenticated")
 
 
 def get_current_user_id(request: Request):
-    encrypted_user_id = request.cookies.get("userId")
-    if not encrypted_user_id:
+    token = request.headers.get("Authorization")
+    if not token:
         raise HTTPException(status_code=401, detail="Not authenticated")
-    user_id = decrypt_user_id(encrypted_user_id)
+    token = token.replace("Bearer ", "")
+    user_id = decode_access_token(token)
     return user_id
 
 
 @router.get("/api/user/{email}")
 async def get_user(email: str):
-    user = user_collection.find_one(
-        {"email": email}
-    )
+    user = user_collection.find_one({"email": email})
     if user is None:
         return {'message': "user doesn't exist", "bool": False}
     else:
@@ -57,10 +65,8 @@ async def get_user(email: str):
         return {'message': 'user found', 'userRole': user["role"], "bool": True, "userID": user["_id"]}
 
 
-
 @router.get("/questions/")
 async def get_questions():
-    print(datetime.now())
     questions = list_quesiton(user_questions_collections.find())
     return questions
 
@@ -74,7 +80,7 @@ async def post_user(reguser: RegBase):
 
 
 @router.post("/api/user/login")
-async def login(request: Request, user_data: User):
+async def login(user_data: User):
     user = user_collection.find_one({"email": user_data.email})
     if user is None:
         raise HTTPException(
@@ -86,19 +92,32 @@ async def login(request: Request, user_data: User):
             status_code=401, detail="Invalid email or password")
 
     user_id = str(user["_id"])
-    encrypted_user_id = encrypt_user_id(user_id)
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": user_id}, expires_delta=access_token_expires
+    )
+    # Create session
+    session = create_session(user_id, access_token_expires)
+    session_id = session_collection.insert_one(session).inserted_id
 
-    response = JSONResponse(
-        content={'message': 'Login successful!', 'userId': encrypted_user_id})
-    response.set_cookie(key="userId", value=encrypted_user_id,
-                        httponly=True, secure=True, samesite='None')
-    return response
+    # Convert datetime to string for JSON serialization
+    session_data = {
+        'session_id': str(session_id),
+        'user_id': session['user_id'],
+        'created_at': session['created_at'].isoformat(),
+        'expires_at': session['expires_at'].isoformat()
+    }
+
+    return JSONResponse(content={
+        'message': 'Login successful!',
+        'access_token': access_token,
+        'token_type': 'bearer',
+        'session_id': session_data
+    })
+
 
 @router.get("/protected")
 async def protected_route(user_id: str = Depends(get_current_user_id)):
-
-    if not user_id:
-        raise HTTPException(status_code=401, detail="Not authenticated")
     user = user_collection.find_one({"_id": ObjectId(user_id)})
     for key, value in user.items():
         if key == '_id':
@@ -109,8 +128,10 @@ async def protected_route(user_id: str = Depends(get_current_user_id)):
 
 
 @router.post("/api/user/logout")
-async def logout(response: Response):
-    response.delete_cookie("userId")
+async def logout(response: Response, request: Request):
+    session_id = request.headers.get("Session-ID")
+    if session_id:
+        session_collection.delete_one({"_id": ObjectId(session_id)})
     return {"message": "Logout successful!"}
 
 
