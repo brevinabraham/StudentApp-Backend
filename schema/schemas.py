@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 
-def individual_question(question) -> dict:
+
+def individual_question_user_creation(question) -> dict:
     return {
         "id": str(question["_id"]),
         "title": question["title"],
@@ -12,9 +13,8 @@ def individual_question(question) -> dict:
     }
 
 
-def list_quesiton(questions) -> list:
-    return [individual_question(question) for question in questions]
-
+def list_quesiton_user_creation(questions) -> list:
+    return [individual_question_user_creation(question) for question in questions]
 
 def individual_user(user) -> dict:
     return {
@@ -26,16 +26,6 @@ def individual_user(user) -> dict:
         "password": user["password"],
         "role": user["role"]
     }
-
-
-def individual_session(session) -> dict:
-    return {
-        "session_id": str(session["_id"]),
-        "user_id": session["user_id"],
-        "created_at": session["created_at"],
-        "expires_at": session["expires_at"]
-    }
-
 
 def create_session(user_id: str, expires_delta: timedelta):
     now = datetime.now()

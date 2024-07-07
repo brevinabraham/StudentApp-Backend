@@ -4,7 +4,8 @@ from dotenv import load_dotenv
 from pymongo.server_api import ServerApi
 from pymongo.mongo_client import MongoClient
 from fastapi import FastAPI
-from routes.routes import router
+from routes.usersroutes import userrouter
+from routes.feedsroutes import feedsrouter
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 
@@ -16,6 +17,7 @@ dotenv_path = os.getenv('MONGOURL')
 load_dotenv(dotenv_path=dotenv_path)
 client = MongoClient(os.getenv('MONGOURL'),
                      server_api=ServerApi('1'))
+
 # Send a ping to confirm a successful connection
 try:
     client.admin.command('ping')
@@ -35,4 +37,5 @@ app.add_middleware(
 )
 
 
-app.include_router(router)
+app.include_router(userrouter)
+app.include_router(feedsrouter)

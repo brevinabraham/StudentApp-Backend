@@ -2,10 +2,9 @@ from pymongo.server_api import ServerApi
 from pymongo.mongo_client import MongoClient
 from fastapi import APIRouter, HTTPException, Request, Depends, Response
 from fastapi.responses import JSONResponse
-from models.user_management import RegBase
-from models.user_management import User
-from config.database import user_collection, user_questions_collections, session_collection
-from schema.schemas import list_quesiton, create_session, individual_session
+from models.user_management import RegBase, User
+from config.database import user_collection, user_questions_collections, user_session_collection
+from schema.schemas import list_quesiton_user_creation, create_session
 from bson import ObjectId
 from datetime import datetime, timedelta
 from passlib.context import CryptContext
@@ -13,19 +12,19 @@ import bcrypt
 import jwt
 import os
 
-router = APIRouter()
+userrouter = APIRouter()
 
 SECRET_KEY = os.getenv('SECRET_KEY').encode()
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+ACCESS_TOKEN_EXPIRE_MINUTES = 15
 
 
 def create_access_token(data: dict, expires_delta: timedelta = None):
     to_encode = data.copy()
     if expires_delta:
-        expire = datetime.utcnow() + expires_delta
+        expire = datetime.now() + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(minutes=15)
+        expire = datetime.now() + timedelta(minutes=15)
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
@@ -51,9 +50,10 @@ def get_current_user_id(request: Request):
     return user_id
 
 
-@router.get("/api/user/{email}")
+@userrouter.get("/api/user/{email}")
 async def get_user(email: str):
     user = user_collection.find_one({"email": email})
+    print(email)
     if user is None:
         return {'message': "user doesn't exist", "bool": False}
     else:
@@ -62,24 +62,24 @@ async def get_user(email: str):
                 user[key] = str(value)
             else:
                 user[key] = value
-        return {'message': 'user found', 'userRole': user["role"], "bool": True, "userID": user["_id"]}
+        return {'message': 'user found', 'userRole': user["roles"], "bool": True, "userID": user["_id"]}
 
 
-@router.get("/questions/")
+@userrouter.get("/api/user/questions/")
 async def get_questions():
-    questions = list_quesiton(user_questions_collections.find())
+    questions = list_quesiton_user_creation(user_questions_collections.find())
     return questions
 
 
-@router.post("/api/user")
+@userrouter.post("/api/user")
 async def post_user(reguser: RegBase):
     reguser.password = bcrypt.hashpw(
         reguser.password.encode('utf-8'), bcrypt.gensalt())
     user_collection.insert_one(dict(reguser))
-    return {'message': 'complete'}
+    return {'message': 'user has been added'}
 
 
-@router.post("/api/user/login")
+@userrouter.post("/api/user/login")
 async def login(user_data: User):
     user = user_collection.find_one({"email": user_data.email})
     if user is None:
@@ -98,7 +98,7 @@ async def login(user_data: User):
     )
     # Create session
     session = create_session(user_id, access_token_expires)
-    session_id = session_collection.insert_one(session).inserted_id
+    session_id = user_session_collection.insert_one(session).inserted_id
 
     # Convert datetime to string for JSON serialization
     session_data = {
@@ -112,35 +112,45 @@ async def login(user_data: User):
         'message': 'Login successful!',
         'access_token': access_token,
         'token_type': 'bearer',
-        'session_id': session_data
+        'session_data': session_data
     })
 
 
-@router.get("/protected")
+@userrouter.get("/api/user/protected/")
 async def protected_route(user_id: str = Depends(get_current_user_id)):
     user = user_collection.find_one({"_id": ObjectId(user_id)})
-    for key, value in user.items():
-        if key == '_id':
-            user[key] = str(value)
-        else:
-            user[key] = value
+    user['_id'] = str(user['_id'])
     return {'data': user}
 
 
-@router.post("/api/user/logout")
-async def logout(response: Response, request: Request):
-    session_id = request.headers.get("Session-ID")
+@userrouter.get("/api/user/session/loggedin")
+async def is_logged_in(request: Request):
+    if not request.headers.get('session_id'):
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    sessionid = request.headers.get('session_id').replace("Bearer ", "")
+    logged_in_bool = user_session_collection.find_one(
+        {"_id": ObjectId(sessionid)})
+    if logged_in_bool is None:
+        raise HTTPException(
+            status_code=401, detail="No user logged in")
+    logged_in_bool['_id'] = str(logged_in_bool['_id'])
+    return {'response': True}
+
+
+@userrouter.post("/api/user/logout")
+async def logout(request: Request):
+    session_id = request.headers.get("session-id")
     if session_id:
-        session_collection.delete_one({"_id": ObjectId(session_id)})
+        user_session_collection.delete_one({"_id": ObjectId(session_id)})
     return {"message": "Logout successful!"}
 
 
-@router.put("/api/user/{id}")
+@userrouter.put("/api/user/{id}")  # update user details
 async def put_user(id: str, user: RegBase):
     user_collection.find_one_and_update(
         {"_id": ObjectId(id)}, {"$set": dict(user)})
 
 
-@router.delete("/api/user/{id}")
+@userrouter.delete("/api/user/{id}")  # remove user
 async def delete_user(id: str):
     user_collection.find_one_and_delete({"_id": ObjectId(id)})
