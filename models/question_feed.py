@@ -9,5 +9,7 @@ class Question(BaseModel):
     content: str
     created_at: datetime = datetime.now()
     updated_at: datetime = datetime.now()
-    status: str = "open"
-    tags: list = []
+    status_id: list = []
+    tags_id: list = []
+    topic_id: list = []
+    subtopic_id: list = []

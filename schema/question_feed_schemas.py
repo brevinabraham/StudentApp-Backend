@@ -6,8 +6,10 @@ def feed_individual_question(question) -> dict:
         "content": question["content"],
         "created_at": question["created_at"],
         "updated_at": question["updated_at"],
-        "status": question["status"],
-        "tags": question["tags"]
+        "status_id": question["status_id"],
+        "tags_id": question["tags_id"],
+        "topic_id": question["topic_id"],
+        "subtopic_id": question["subtopic_id"]
     }
 
 
