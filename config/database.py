@@ -16,3 +16,4 @@ user_questions_collections = db_user_management["questions"]
 user_session_collection = db_user_management["session_collection"]
 
 question_feed_user_questions = db_question_feed['user_questions']
+question_feed_user_question_templates = db_question_feed['question_template']

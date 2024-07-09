@@ -1,3 +1,17 @@
+def individual_question_for_feed(question) -> dict:
+    return {
+        "id": str(question["_id"]),
+        "title": question["title"],
+        "inputType": question["inputType"],
+        "required": question["required"]
+    }
+
+
+def list_individual_question_for_feed(questions) -> list:
+    return [individual_question_for_feed(question) for question in questions]
+
+
+
 def feed_individual_question(question) -> dict:
     return {
         "id": str(question["_id"]),
@@ -15,3 +29,4 @@ def feed_individual_question(question) -> dict:
 
 def feed_list_quesiton(questions) -> list:
     return [feed_individual_question(question) for question in questions]
+
