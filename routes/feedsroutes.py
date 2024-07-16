@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Request, Depends, Response
 from models.question_feed import Question
-from config.database import question_feed_user_questions, question_feed_user_question_templates
-from schema.question_feed_schemas import feed_list_quesiton, list_individual_question_for_feed
+from config.database import question_feed_user_questions, question_feed_user_question_templates, question_statuses
+from schema.question_feed_schemas import feed_list_quesiton, list_individual_question_for_feed, list_question_statuses
 
 feedsrouter = APIRouter()
 
@@ -23,7 +23,7 @@ async def deleted():
     question_feed_user_questions.delete_many({})
 
 
-@feedsrouter.get("/api/feeds/questions/")
+@feedsrouter.get("/api/feeds/questions_template/")
 async def get_questions():
     questions = list_individual_question_for_feed(
         question_feed_user_question_templates.find())
