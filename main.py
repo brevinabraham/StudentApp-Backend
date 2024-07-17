@@ -11,12 +11,14 @@ from starlette.middleware.sessions import SessionMiddleware
 
 app = FastAPI()
 
-# uvicorn app:main --reload
+# uvicorn main:app --reload
+
+
 
 dotenv_path = os.getenv('MONGOURL')
 load_dotenv(dotenv_path=dotenv_path)
 client = MongoClient(os.getenv('MONGOURL'),
-                     server_api=ServerApi('1'))
+                     server_api=ServerApi('1'), ssl=True)
 
 # Send a ping to confirm a successful connection
 try:
@@ -24,7 +26,6 @@ try:
     print("Pinged your deployment. You successfully connected to MongoDB!")
 except Exception as e:
     print(e)
-
 
 
 
