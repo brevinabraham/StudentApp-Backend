@@ -1,7 +1,8 @@
 from fastapi import APIRouter, HTTPException, Request, Depends, Response
-from models.question_feed import Question
+from models.question_feed import Question, UpdateQuestion
 from config.database import question_feed_user_questions, question_feed_user_question_templates, question_statuses
 from schema.question_feed_schemas import feed_list_quesiton, list_individual_question_for_feed, list_question_statuses
+from bson import ObjectId
 
 feedsrouter = APIRouter()
 
@@ -18,6 +19,13 @@ async def get_questions():
     return questions
 
 
+@feedsrouter.get("/api/feeds/getQuestion")
+async def get_questions(id: str):
+    question = question_feed_user_questions.find_one({"_id": ObjectId(id)})
+    question["_id"] = str(question["_id"])
+    return question
+
+
 @feedsrouter.delete("/api/feeds/delete_all_questions")
 async def deleted():
     question_feed_user_questions.delete_many({})
@@ -28,3 +36,20 @@ async def get_questions():
     questions = list_individual_question_for_feed(
         question_feed_user_question_templates.find())
     return questions
+
+
+@feedsrouter.delete("/api/feeds/questions/rm/")  # remove q
+async def delete_user(id: str):
+    question_feed_user_questions.find_one_and_delete({"_id": ObjectId(id)})
+    return {'message': 'sucessfully deleted'}
+
+
+@feedsrouter.put("/api/feeds/questions/edit/")
+async def put_question(id: str, question: UpdateQuestion):
+    result = question_feed_user_questions.find_one_and_update(
+        {"_id": ObjectId(id)}, {"$set": dict(question)})
+
+    if result is None:
+        raise HTTPException(status_code=404, detail="Question not found")
+
+    return {'message': 'successfully updated'}
