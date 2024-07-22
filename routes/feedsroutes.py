@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Request, Depends, Response
 from models.question_feed import Question, UpdateQuestion
-from config.database import question_feed_user_questions, question_feed_user_question_templates, question_statuses
+from config.database import question_feed_user_questions, question_feed_user_question_templates, question_statuses, db_answers
 from schema.question_feed_schemas import feed_list_quesiton, list_individual_question_for_feed, list_question_statuses
 from bson import ObjectId
 
@@ -41,6 +41,7 @@ async def get_questions():
 @feedsrouter.delete("/api/feeds/questions/rm/")  # remove q
 async def delete_user(id: str):
     question_feed_user_questions.find_one_and_delete({"_id": ObjectId(id)})
+    db_answers.delete_many({"question_id": id})
     return {'message': 'sucessfully deleted'}
 
 

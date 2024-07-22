@@ -6,6 +6,7 @@ from pymongo.mongo_client import MongoClient
 from fastapi import FastAPI
 from routes.usersroutes import userrouter
 from routes.feedsroutes import feedsrouter
+from routes.answersroutes import answerrouter
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 
@@ -40,3 +41,4 @@ app.add_middleware(
 
 app.include_router(userrouter)
 app.include_router(feedsrouter)
+app.include_router(answerrouter)

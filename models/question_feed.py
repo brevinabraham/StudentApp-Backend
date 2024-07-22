@@ -1,8 +1,6 @@
 from pydantic import BaseModel, Field
 from datetime import datetime
 
-
-
 class Question(BaseModel):
     user_id: str
     title: str
@@ -14,6 +12,8 @@ class Question(BaseModel):
     topic_id: list = []
     subtopic_id: list = []
     comments_count: int = 0
+    like_count: int = 0
+    version: int = 0
 
 
 class UpdateQuestion(BaseModel):
