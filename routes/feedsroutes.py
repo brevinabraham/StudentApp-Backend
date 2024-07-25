@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Request, Depends, Response
 from models.question_feed import Question, UpdateQuestion
-from config.database import question_feed_user_questions, question_feed_user_question_templates, question_statuses, db_answers
+from config.database import question_feed_user_questions, question_feed_user_question_templates, question_statuses, db_answers, db_question_likes
 from schema.question_feed_schemas import feed_list_quesiton, list_individual_question_for_feed, list_question_statuses
 from bson import ObjectId
 
@@ -20,7 +20,7 @@ async def get_questions():
 
 
 @feedsrouter.get("/api/feeds/getQuestion")
-async def get_questions(id: str):
+async def get_question(id: str):
     question = question_feed_user_questions.find_one({"_id": ObjectId(id)})
     question["_id"] = str(question["_id"])
     return question
@@ -54,3 +54,16 @@ async def put_question(id: str, question: UpdateQuestion):
         raise HTTPException(status_code=404, detail="Question not found")
 
     return {'message': 'successfully updated'}
+
+
+@feedsrouter.put("/api/feeds/question/like")
+async def addLike(userid: str, questionid: str):
+    existLike = db_question_likes.count_documents(
+        {"$and": [{"user_id": userid}, {"question_id": questionid}]})
+    print(existLike)
+    if existLike > 0:
+        return {"message": "alreadyliked"}
+    db_question_likes.insert_one(
+        {"user_id": userid, "question_id": questionid})
+    question_feed_user_questions.find_one_and_update(
+        {"_id": ObjectId(questionid)}, {"$inc": {"like_count": 1}})

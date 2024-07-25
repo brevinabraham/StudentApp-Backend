@@ -12,7 +12,7 @@ from starlette.middleware.sessions import SessionMiddleware
 
 app = FastAPI()
 
-# uvicorn main:app --reload
+# uvicorn main:app --host 192.168.0.14 --port 8000 --reload
 
 
 

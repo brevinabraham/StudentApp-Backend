@@ -20,3 +20,4 @@ question_feed_user_question_templates = db_question_feed['question_template']
 question_statuses = db_question_feed["question_status"]
 
 db_answers = db_question_feed['answers']
+db_question_likes = db_question_feed['question_likes']
